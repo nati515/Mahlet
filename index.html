@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mahlet: Follow Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;600;700&family=Noto+Serif+Ethiopic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Palette: dark red, ivory, deep green. Change the values below to retheme. */
+  :root {
+    --outside: #e9dfd0;
+    --bg: #f7f1e6;
+    --surface: #fffaf1;
+    --ink: #2a1618;
+    --muted: #6a5a54;
+    --line: #e0d3bf;
+    --primary: #6b1520;      /* dark red */
+    --accent: #f0cfc5;       /* soft rose, for lettering on dark red */
+    --green: #1f4a38;        /* deep green, used sparingly */
+    --red-text: #7d1a28;
+    --link: #7d1a28;
+    --note-bg: #efe2d0;
+    --note-ink: #4a3326;
+    --size: 1.2rem;
+    --body: "Literata", Georgia, "Times New Roman", serif;
+    --geez: "Noto Serif Ethiopic", "Abyssinica SIL", "Nyala", "Kefa", serif;
+    --band: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='18' viewBox='0 0 32 18'%3E%3Crect width='32' height='18' fill='%23f1e4cf'/%3E%3Crect width='32' height='2' fill='%236b1520'/%3E%3Crect y='16' width='32' height='2' fill='%236b1520'/%3E%3Cpath d='M0 16L8 4l8 12z' fill='%236b1520'/%3E%3Cpath d='M16 16l8-12 8 12z' fill='%231f4a38'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --outside: #0f0809;
+      --bg: #1a0f11;
+      --surface: #2a1719;
+      --ink: #f4e9e4;
+      --muted: #c4aea6;
+      --line: #4a2c30;
+      --primary: #7d1a28;
+      --red-text: #f0a9a2;
+      --link: #f0a9a2;
+      --note-bg: #3a2a1e;
+      --note-ink: #ecd9c4;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--outside);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .sheet {
+    max-width: 44rem; margin: 0 auto; min-height: 100vh;
+    background: var(--bg);
+    box-shadow: 0 0 40px rgba(10, 20, 60, 0.25);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Picture and textile band */
+  .picture {
+    display: block; width: 100%; object-fit: cover; background: var(--primary);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .picture.hero { aspect-ratio: 16 / 10; object-position: 50% 3%; }
+  .picture.banner { aspect-ratio: 2 / 1; }
+  .band { height: 18px; background: var(--band) repeat-x left top / 32px 18px; }
+
+  /* Title block */
+  .title-block { background: var(--primary); color: #fff; padding: 1.4rem 1.25rem 1.6rem; }
+  .geez-title {
+    font-family: var(--geez); font-weight: 700; font-size: 3.4rem; line-height: 1.15;
+    color: var(--accent); margin: 0;
+  }
+  .title-block h1 { margin: 0.2rem 0 0; font-size: 1.5rem; font-weight: 700; }
+  .title-block .church { margin: 0.1rem 0 0; color: #e6c9c1; font-size: 0.98rem; }
+  .title-block .how { margin: 1rem 0 0; font-size: 1.05rem; max-width: 30rem; }
+
+  /* Halo number badge */
+  .halo {
+    flex: none; display: grid; place-items: center;
+    width: 3rem; height: 3rem; border-radius: 50%;
+    background: var(--primary); color: #fff8ef;
+    box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--primary);
+    margin: 5px;
+    font-weight: 700; font-size: 1.15rem; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .content { padding: 1.25rem 1rem 2rem; }
+
+  /* Search */
+  .search {
+    width: 100%; padding: 0.85rem 1rem; font: inherit; font-size: 1.05rem;
+    border: 2px solid var(--line); border-radius: 0.75rem;
+    background: var(--surface); color: var(--ink); margin-bottom: 1rem;
+  }
+  .search::placeholder { color: var(--muted); }
+
+  /* Quick number grid */
+  .jump-title { margin: 0 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+  .jump { display: grid; grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); gap: 0.35rem; margin-bottom: 1.6rem; }
+  .jump a { display: grid; place-items: center; padding: 0.15rem 0; text-decoration: none; }
+  .jump .halo { margin: 5px auto; }
+  .jump a:active .halo { background: var(--green); box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--green); }
+  .list-title { margin: 0 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+
+  /* Hymn list */
+  .index { list-style: none; margin: 0; padding: 0; }
+  .index li + li { margin-top: 0.6rem; }
+  .index a {
+    display: flex; gap: 0.95rem; align-items: center;
+    padding: 0.7rem 1rem 0.7rem 0.75rem; text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 0.75rem;
+  }
+  .index a:active { border-color: var(--primary); }
+  .index .t-en { display: block; font-weight: 600; line-height: 1.35; }
+  .index .t-geez { display: block; font-family: var(--geez); color: var(--red-text); font-size: 1.02rem; line-height: 1.5; }
+  .empty { color: var(--muted); padding: 1rem 0; }
+
+  /* Hymn page */
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 1.1rem; }
+  .back {
+    text-decoration: none; color: var(--link); font-weight: 700;
+    min-height: 2.75rem; display: inline-flex; align-items: center;
+  }
+  .sizer { display: flex; gap: 0.4rem; }
+  .sizer button {
+    border: 2px solid var(--line); background: var(--surface); border-radius: 0.6rem;
+    min-width: 2.9rem; min-height: 2.75rem; cursor: pointer; font-weight: 700;
+  }
+  .hymn-head { display: flex; gap: 0.9rem; align-items: center; margin-bottom: 1.1rem; }
+  .hymn-head h2 { margin: 0; font-size: 1.45rem; line-height: 1.25; }
+  .hymn-head .sub { font-family: var(--geez); color: var(--red-text); font-size: 1.1rem; line-height: 1.4; display: block; }
+
+  .draft {
+    background: var(--note-bg); color: var(--note-ink);
+    padding: 0.7rem 0.9rem; border-radius: 0.5rem; font-size: 0.95rem; margin-bottom: 1rem;
+  }
+
+  .english-panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 0.9rem 0.9rem 0.5rem 0.5rem;
+    padding: 1.3rem 1.25rem; margin-bottom: 1rem;
+    border-top: 6px solid var(--primary);
+  }
+  .english { font-size: var(--size); line-height: 1.75; white-space: pre-line; max-width: 34rem; }
+
+  .minor { padding: 0.2rem 0.25rem 1.1rem; }
+  .minor h3 { margin: 0 0 0.3rem; font-size: 0.98rem; font-weight: 600; color: var(--muted); }
+  .translit { font-size: calc(var(--size) * 0.85); font-style: italic; white-space: pre-line; line-height: 1.7; }
+  .geez { font-family: var(--geez); font-size: calc(var(--size) * 1.1); line-height: 1.9; white-space: pre-line; }
+
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 0.5rem; margin-bottom: 0.75rem; }
+  summary {
+    cursor: pointer; padding: 0.9rem 1.1rem; font-weight: 700; list-style: none;
+    display: flex; justify-content: space-between; align-items: center; min-height: 3rem;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 1.5rem; color: var(--red-text); line-height: 1; }
+  details[open] summary::after { content: "\2212"; }
+  .details-body { padding: 0 1.1rem 1.1rem; white-space: pre-line; max-width: 34rem; }
+  .sources { margin: 0; padding-left: 1.2rem; white-space: normal; }
+  .sources li + li { margin-top: 0.4rem; }
+
+  .pager { display: flex; gap: 0.6rem; margin-top: 1.4rem; }
+  .pager a {
+    flex: 1; text-align: center; text-decoration: none; padding: 0.85rem 0.5rem;
+    border: 2px solid var(--line); border-radius: 0.6rem; background: var(--surface);
+    color: var(--link); font-weight: 700;
+  }
+  .pager a.off { visibility: hidden; }
+
+  footer { color: #e6c9c1; background: var(--primary); font-size: 0.9rem; text-align: center; padding: 1.1rem 1rem 1.4rem; }
+  footer p { margin: 0 auto; max-width: 28rem; }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- List page -->
+  <div id="view-index">
+    <img class="picture hero" src="yared-icon.jpg" alt="Icon of Saint Yared in white robes, holding the sistrum, with a drum at his feet and doves above.">
+    <div class="band" aria-hidden="true"></div>
+    <div class="title-block">
+      <p class="geez-title" lang="gez">ምሕላ</p>
+      <h1>Mahlet: Follow Along</h1>
+      <p class="church" id="church-name"></p>
+      <p class="how">Find the hymn number above the QR code, then tap it below to read the English.</p>
+    </div>
+    <div class="content">
+      <h2 class="jump-title">Tap the hymn number</h2>
+      <div id="jump" class="jump"></div>
+      <h2 class="list-title">Or find it by title</h2>
+      <input id="search" class="search" type="search" placeholder="Search by number or title" aria-label="Search hymns" autocomplete="off">
+      <ul id="index" class="index"></ul>
+      <p id="empty" class="empty" hidden>No hymns match that search.</p>
+    </div>
+  </div>
+
+  <!-- Single hymn page -->
+  <div id="view-hymn" hidden>
+    <img id="banner" class="picture banner" src="" alt="">
+    <div class="band" aria-hidden="true"></div>
+    <div class="content" id="hymn-content"></div>
+  </div>
+
+  <footer>
+    <p>Texts and explanations are prepared with the guidance of our clergy.</p>
+  </footer>
+</div>
+
+<script>
+/* =====================================================================
+   EDIT HERE
+   1. Change CHURCH_NAME.
+   2. To add a hymn, copy one block inside HYMNS, paste it at the end
+      (put a comma after the previous block), and fill it in.
+   3. Use \n inside a text to start a new line.
+   4. Set reviewed: true once a priest or deacon has approved the entry.
+      Until then, a "draft" note shows at the top of that hymn.
+   5. Optional: add  image: "yared-tree.jpg"  to a hymn to choose its
+      picture. Without it, the pictures rotate automatically.
+   ===================================================================== */
+
+const CHURCH_NAME = "Your Church Name Here";
+
+const HYMNS = [
+  {
+    id: 1,                                   // Number shown on the slide. Keep unique.
+    titleGeez: "[የመዝሙሩ ርዕስ]",
+    titleEnglish: "Sample hymn one",
+    reviewed: false,
+    geez: "[Paste the Geez text here.\nEach line on its own line.]",
+    transliteration: "[Paste the transliteration here.\nEach line on its own line.]",
+    english: "[Paste the English translation here.\nEach line on its own line.]",
+    meaning: "[Write a short, plain-language explanation of what this hymn says and why it is sung at this point in the service.]",
+    sources: [
+      "[Scripture reference, for example a Psalm or Gospel passage]",
+      "[Feast, saint, or season connected to the hymn]",
+      "[Tradition or author, for example Saint Yared, if applicable]"
+    ]
+  },
+  {
+    id: 2,
+    titleGeez: "[የመዝሙሩ ርዕስ]",
+    titleEnglish: "Sample hymn two",
+    reviewed: false,
+    geez: "[Paste the Geez text here.]",
+    transliteration: "[Paste the transliteration here.]",
+    english: "[Paste the English translation here.]",
+    meaning: "[Short explanation.]",
+    sources: [
+      "[Scripture reference]",
+      "[Tradition or author]"
+    ]
+  },
+  {
+    id: 3,
+    titleGeez: "[የመዝሙሩ ርዕስ]",
+    titleEnglish: "Sample hymn three",
+    reviewed: false,
+    geez: "[Paste the Geez text here.]",
+    transliteration: "[Paste the transliteration here.]",
+    english: "[Paste the English translation here.]",
+    meaning: "[Short explanation.]",
+    sources: [
+      "[Scripture reference]"
+    ]
+  }
+];
+
+/* Pictures used on hymn pages. pos is how the picture is cropped. */
+const PICTURES = [
+  { src: "yared-tree.jpg",       pos: "50% 6%",  alt: "Icon of Saint Yared beside an open book, with doves in a tree." },
+  { src: "yared-doves.jpg",      pos: "50% 10%", alt: "Painting of Saint Yared carrying his staff, with doves above him." },
+  { src: "yared-manuscript.jpg", pos: "50% 8%",  alt: "Manuscript-style drawing of Saint Yared with three doves." }
+];
+
+/* ===================== Page code (no need to edit) ===================== */
+
+const $ = (id) => document.getElementById(id);
+const byId = (n) => HYMNS.find((h) => h.id === n);
+
+$("church-name").textContent = CHURCH_NAME;
+
+/* Text size, remembered on this phone when possible */
+let size = 1.2;
+try {
+  const saved = parseFloat(localStorage.getItem("mahletSize"));
+  if (saved >= 1 && saved <= 2.1) size = saved;
+} catch (e) {}
+function applySize() {
+  document.documentElement.style.setProperty("--size", size + "rem");
+  try { localStorage.setItem("mahletSize", String(size)); } catch (e) {}
+}
+applySize();
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+
+/* Index */
+function renderIndex(filter) {
+  const q = (filter || "").trim().toLowerCase();
+  const list = $("index");
+  list.textContent = "";
+  let shown = 0;
+  HYMNS.forEach((h) => {
+    const hay = (h.id + " " + h.titleGeez + " " + h.titleEnglish).toLowerCase();
+    if (q && !hay.includes(q)) return;
+    shown++;
+    const li = el("li");
+    const a = el("a");
+    a.href = "#hymn-" + h.id;
+    const wrap = el("span");
+    wrap.append(el("span", "t-en", h.titleEnglish));
+    if (h.titleGeez) {
+      const g = el("span", "t-geez", h.titleGeez);
+      g.setAttribute("lang", "gez");
+      wrap.append(g);
+    }
+    a.append(el("span", "halo", h.id), wrap);
+    li.append(a);
+    list.append(li);
+  });
+  $("empty").hidden = shown !== 0;
+}
+function renderJump() {
+  const box = $("jump");
+  box.textContent = "";
+  HYMNS.forEach((h) => {
+    const a = el("a");
+    a.href = "#hymn-" + h.id;
+    a.setAttribute("aria-label", "Hymn " + h.id + ": " + h.titleEnglish);
+    a.append(el("span", "halo", h.id));
+    box.append(a);
+  });
+}
+$("search").addEventListener("input", (ev) => renderIndex(ev.target.value));
+
+/* Hymn page */
+function fold(title, child) {
+  const det = el("details");
+  det.append(el("summary", "", title));
+  const body = el("div", "details-body");
+  body.append(child);
+  det.append(body);
+  return det;
+}
+function minor(title, text, cls, lang) {
+  const d = el("div", "minor");
+  d.append(el("h3", "", title));
+  const p = el("div", cls, text);
+  if (lang) p.setAttribute("lang", lang);
+  d.append(p);
+  return d;
+}
+
+function renderHymn(h) {
+  const i = HYMNS.indexOf(h);
+
+  /* Picture */
+  const listed = h.image && PICTURES.find((p) => p.src === h.image);
+  const pic = listed || (h.image ? { src: h.image, pos: "50% 10%", alt: "Saint Yared" } : PICTURES[i % PICTURES.length]);
+  const banner = $("banner");
+  banner.src = pic.src;
+  banner.alt = pic.alt;
+  banner.style.objectPosition = pic.pos;
+
+  const v = $("hymn-content");
+  v.textContent = "";
+
+  /* Toolbar */
+  const bar = el("div", "toolbar");
+  const back = el("a", "back", "\u2039 All hymns");
+  back.href = "#";
+  const sizer = el("div", "sizer");
+  const minus = el("button", "", "A\u2212");
+  minus.type = "button";
+  minus.setAttribute("aria-label", "Smaller text");
+  minus.onclick = () => { size = Math.max(1, +(size - 0.15).toFixed(2)); applySize(); };
+  const plus = el("button", "", "A+");
+  plus.type = "button";
+  plus.setAttribute("aria-label", "Larger text");
+  plus.onclick = () => { size = Math.min(2.1, +(size + 0.15).toFixed(2)); applySize(); };
+  sizer.append(minus, plus);
+  bar.append(back, sizer);
+  v.append(bar);
+
+  /* Heading */
+  const head = el("div", "hymn-head");
+  const t = el("div");
+  t.append(el("h2", "", h.titleEnglish));
+  if (h.titleGeez) {
+    const g = el("span", "sub", h.titleGeez);
+    g.setAttribute("lang", "gez");
+    t.append(g);
+  }
+  head.append(el("span", "halo", h.id), t);
+  v.append(head);
+
+  if (!h.reviewed) {
+    v.append(el("div", "draft", "Draft: this translation has not yet been reviewed by our clergy."));
+  }
+
+  /* English comes first */
+  const panel = el("div", "english-panel");
+  panel.append(el("div", "english", h.english));
+  v.append(panel);
+
+  v.append(minor("How it sounds", h.transliteration, "translit"));
+  v.append(minor("Geez", h.geez, "geez", "gez"));
+
+  v.append(fold("What this means", el("div", "", h.meaning)));
+
+  const ul = el("ul", "sources");
+  (h.sources || []).forEach((s) => ul.append(el("li", "", s)));
+  v.append(fold("Where it comes from", ul));
+
+  /* Previous / next */
+  const prev = HYMNS[i - 1], next = HYMNS[i + 1];
+  const pager = el("div", "pager");
+  const pa = el("a", "", "\u2039 Hymn " + (prev ? prev.id : ""));
+  if (prev) pa.href = "#hymn-" + prev.id; else pa.className = "off";
+  const na = el("a", "", "Hymn " + (next ? next.id : "") + " \u203A");
+  if (next) na.href = "#hymn-" + next.id; else na.className = "off";
+  pager.append(pa, na);
+  v.append(pager);
+}
+
+/* Routing: the web address ends in #hymn-12 for hymn 12 */
+function route() {
+  const m = location.hash.match(/^#hymn-(\d+)$/);
+  const h = m ? byId(parseInt(m[1], 10)) : null;
+  if (h) {
+    $("view-index").hidden = true;
+    $("view-hymn").hidden = false;
+    renderHymn(h);
+    document.title = "Hymn " + h.id + " \u2013 Mahlet";
+  } else {
+    $("view-hymn").hidden = true;
+    $("view-index").hidden = false;
+    document.title = "Mahlet: Follow Along";
+  }
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+renderJump();
+renderIndex("");
+route();
+</script>
+</body>
+</html>
