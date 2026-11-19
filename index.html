@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mahlet: Follow Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;600;700&family=Noto+Serif+Ethiopic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Palette: dark red, ivory, deep green. Change the values below to retheme. */
+  :root {
+    --outside: #e9dfd0;
+    --bg: #f7f1e6;
+    --surface: #fffaf1;
+    --ink: #2a1618;
+    --muted: #6a5a54;
+    --line: #e0d3bf;
+    --primary: #6b1520;      /* dark red */
+    --accent: #f0cfc5;       /* soft rose, for lettering on dark red */
+    --green: #1f4a38;        /* deep green, used sparingly */
+    --red-text: #7d1a28;
+    --link: #7d1a28;
+    --note-bg: #efe2d0;
+    --note-ink: #4a3326;
+    --size: 1.2rem;
+    --body: "Literata", Georgia, "Times New Roman", serif;
+    --geez: "Noto Serif Ethiopic", "Abyssinica SIL", "Nyala", "Kefa", serif;
+    --band: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='18' viewBox='0 0 32 18'%3E%3Crect width='32' height='18' fill='%23f1e4cf'/%3E%3Crect width='32' height='2' fill='%236b1520'/%3E%3Crect y='16' width='32' height='2' fill='%236b1520'/%3E%3Cpath d='M0 16L8 4l8 12z' fill='%236b1520'/%3E%3Cpath d='M16 16l8-12 8 12z' fill='%231f4a38'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --outside: #0f0809;
+      --bg: #1a0f11;
+      --surface: #2a1719;
+      --ink: #f4e9e4;
+      --muted: #c4aea6;
+      --line: #4a2c30;
+      --primary: #7d1a28;
+      --red-text: #f0a9a2;
+      --link: #f0a9a2;
+      --note-bg: #3a2a1e;
+      --note-ink: #ecd9c4;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--outside);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .sheet {
+    max-width: 44rem; margin: 0 auto; min-height: 100vh;
+    background: var(--bg);
+    box-shadow: 0 0 40px rgba(10, 20, 60, 0.25);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Picture and textile band */
+  .picture {
+    display: block; width: 100%; object-fit: cover; background: var(--primary);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .picture.hero { aspect-ratio: 16 / 10; object-position: 50% 3%; }
+  .picture.banner { aspect-ratio: 2 / 1; }
+  .band { height: 18px; background: var(--band) repeat-x left top / 32px 18px; }
+
+  /* Title block */
+  .title-block { background: var(--primary); color: #fff; padding: 1.4rem 1.25rem 1.6rem; }
+  .geez-title {
+    font-family: var(--geez); font-weight: 700; font-size: 3.4rem; line-height: 1.15;
+    color: var(--accent); margin: 0;
+  }
+  .title-block h1 { margin: 0.2rem 0 0; font-size: 1.5rem; font-weight: 700; }
+  .title-block .church { margin: 0.1rem 0 0; color: #e6c9c1; font-size: 0.98rem; }
+  .title-block .how { margin: 1rem 0 0; font-size: 1.05rem; max-width: 30rem; }
+
+  /* Halo number badge */
+  .halo {
+    flex: none; display: grid; place-items: center;
+    width: 3rem; height: 3rem; border-radius: 50%;
+    background: var(--primary); color: #fff8ef;
+    box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--primary);
+    margin: 5px;
+    font-weight: 700; font-size: 1.15rem; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .content { padding: 1.25rem 1rem 2rem; }
+
+  /* Search */
+  .search {
+    width: 100%; padding: 0.85rem 1rem; font: inherit; font-size: 1.05rem;
+    border: 2px solid var(--line); border-radius: 0.75rem;
+    background: var(--surface); color: var(--ink); margin-bottom: 1rem;
+  }
+  .search::placeholder { color: var(--muted); }
+
+  /* Quick number grid */
+  .jump-title { margin: 0 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+  .jump { display: grid; grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); gap: 0.35rem; margin-bottom: 1.6rem; }
+  .jump a { display: grid; place-items: center; padding: 0.15rem 0; text-decoration: none; }
+  .jump .halo { margin: 5px auto; }
+  .jump a:active .halo { background: var(--green); box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--green); }
+  .list-title { margin: 0 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+
+  /* Hymn list */
+  .index { list-style: none; margin: 0; padding: 0; }
+  .index li + li { margin-top: 0.6rem; }
+  .index a {
+    display: flex; gap: 0.95rem; align-items: center;
+    padding: 0.7rem 1rem 0.7rem 0.75rem; text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 0.75rem;
+  }
+  .index a:active { border-color: var(--primary); }
+  .index .t-en { display: block; font-weight: 600; line-height: 1.35; }
+  .index .t-geez { display: block; font-family: var(--geez); color: var(--red-text); font-size: 1.02rem; line-height: 1.5; }
+  .empty { color: var(--muted); padding: 1rem 0; }
+
+  /* Hymn page */
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 1.1rem; }
+  .back {
+    text-decoration: none; color: var(--link); font-weight: 700;
+    min-height: 2.75rem; display: inline-flex; align-items: center;
+  }
+  .sizer { display: flex; gap: 0.4rem; }
+  .sizer button {
+    border: 2px solid var(--line); background: var(--surface); border-radius: 0.6rem;
+    min-width: 2.9rem; min-height: 2.75rem; cursor: pointer; font-weight: 700;
+  }
+  .hymn-head { display: flex; gap: 0.9rem; align-items: center; margin-bottom: 1.1rem; }
+  .hymn-head h2 { margin: 0; font-size: 1.45rem; line-height: 1.25; }
+  .hymn-head .sub { font-family: var(--geez); color: var(--red-text); font-size: 1.1rem; line-height: 1.4; display: block; }
+
+  .draft {
+    background: var(--note-bg); color: var(--note-ink);
+    padding: 0.7rem 0.9rem; border-radius: 0.5rem; font-size: 0.95rem; margin-bottom: 1rem;
+  }
+
+  .english-panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 0.9rem 0.9rem 0.5rem 0.5rem;
+    padding: 1.3rem 1.25rem; margin-bottom: 1rem;
+    border-top: 6px solid var(--primary);
+  }
+  .english { font-size: var(--size); line-height: 1.75; white-space: pre-line; max-width: 34rem; }
+
+  .minor { padding: 0.2rem 0.25rem 1.1rem; }
+  .minor h3 { margin: 0 0 0.3rem; font-size: 0.98rem; font-weight: 600; color: var(--muted); }
+  .translit { font-size: calc(var(--size) * 0.85); font-style: italic; white-space: pre-line; line-height: 1.7; }
+  .geez { font-family: var(--geez); font-size: calc(var(--size) * 1.1); line-height: 1.9; white-space: pre-line; }
+
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 0.5rem; margin-bottom: 0.75rem; }
+  summary {
+    cursor: pointer; padding: 0.9rem 1.1rem; font-weight: 700; list-style: none;
+    display: flex; justify-content: space-between; align-items: center; min-height: 3rem;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 1.5rem; color: var(--red-text); line-height: 1; }
+  details[open] summary::after { content: "\2212"; }
+  .details-body { padding: 0 1.1rem 1.1rem; white-space: pre-line; max-width: 34rem; }
+  .sources { margin: 0; padding-left: 1.2rem; white-space: normal; }
+  .sources li + li { margin-top: 0.4rem; }
+
+  .pager { display: flex; gap: 0.6rem; margin-top: 1.4rem; }
+  .pager a {
+    flex: 1; text-align: center; text-decoration: none; padding: 0.85rem 0.5rem;
+    border: 2px solid var(--line); border-radius: 0.6rem; background: var(--surface);
+    color: var(--link); font-weight: 700;
+  }
+  .pager a.off { visibility: hidden; }
+
+  footer { color: #e6c9c1; background: var(--primary); font-size: 0.9rem; text-align: center; padding: 1.1rem 1rem 1.4rem; }
+  footer p { margin: 0 auto; max-width: 28rem; }
+
+  /* Day / section cards on the home page */
+  .sections { list-style: none; margin: 0; padding: 0; }
+  .sections li + li { margin-top: 0.8rem; }
+  .sections a, .sections .soon {
+    display: block; padding: 1.1rem 1.2rem 1.15rem; text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-top: 6px solid var(--primary);
+    border-radius: 0.9rem 0.9rem 0.5rem 0.5rem;
+  }
+  .sections .soon { border-top-color: var(--line); }
+  .sec-geez { display: block; font-family: var(--geez); font-weight: 700; font-size: 2rem; line-height: 1.35; color: var(--red-text); }
+  .sec-en { display: block; font-weight: 700; font-size: 1.2rem; }
+  .sec-about { display: block; color: var(--muted); font-size: 0.98rem; margin-top: 0.3rem; }
+  .sec-count { display: block; margin-top: 0.6rem; font-weight: 700; color: var(--link); }
+  .soon .sec-count { color: var(--muted); font-weight: 600; }
+  .soon .sec-geez, .soon .sec-en { opacity: 0.7; }
+  .title-block.compact .geez-title { font-size: 2.8rem; }
+  .part {
+    background: var(--surface); border: 1px solid var(--line); border-top: 6px solid var(--primary);
+    border-radius: 0.9rem 0.9rem 0.5rem 0.5rem; padding: 1.1rem 1.25rem 1.25rem; margin-bottom: 1rem;
+  }
+  .part-label { margin: 0 0 0.5rem; font-size: 0.98rem; font-weight: 700; color: var(--red-text); line-height: 1.4; }
+  .part .geez { font-size: calc(var(--size) * 1.1); line-height: 1.9; white-space: pre-line; }
+  .part .under { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--line); }
+  .part .english { max-width: 34rem; }
+  .soon-note { padding: 0 0.25rem 1.1rem; }
+  .soon-text { color: var(--muted); font-style: italic; font-size: calc(var(--size) * 0.9); margin: 0; }
+
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- Home: choose the day -->
+  <div id="view-home">
+    <img class="picture hero" src="yared-icon.jpg" alt="Icon of Saint Yared in white robes, holding the sistrum, with a drum at his feet and doves above.">
+    <div class="band" aria-hidden="true"></div>
+    <div class="title-block">
+      <p class="geez-title" lang="gez">ኅዳር ጽዮን</p>
+      <h1>Hidar Tsion: Follow Along</h1>
+      <p class="church" id="church-name"></p>
+      <p class="how">Choose the part of the service, then use the hymn number shown above the QR code.</p>
+    </div>
+    <div class="content">
+      <ul id="sections" class="sections"></ul>
+    </div>
+  </div>
+
+  <!-- One part of the service: number grid and list -->
+  <div id="view-section" hidden>
+    <img id="sec-banner" class="picture banner" src="" alt="">
+    <div class="band" aria-hidden="true"></div>
+    <div class="title-block compact">
+      <p class="geez-title" id="sec-geez" lang="gez"></p>
+      <h1 id="sec-en"></h1>
+      <p class="how" id="sec-about"></p>
+    </div>
+    <div class="content">
+      <div class="toolbar"><a class="back" href="#">&lsaquo; All parts of the service</a></div>
+      <h2 class="jump-title">Tap the hymn number</h2>
+      <div id="jump" class="jump"></div>
+      <h2 class="list-title">Or find it by title</h2>
+      <input id="search" class="search" type="search" placeholder="Search by number or title" aria-label="Search hymns" autocomplete="off">
+      <ul id="index" class="index"></ul>
+      <p id="empty" class="empty" hidden>No hymns match that search.</p>
+    </div>
+  </div>
+
+  <!-- A single hymn -->
+  <div id="view-hymn" hidden>
+    <img id="banner" class="picture banner" src="" alt="">
+    <div class="band" aria-hidden="true"></div>
+    <div class="content" id="hymn-content"></div>
+  </div>
+
+  <footer>
+    <p>Texts and explanations are prepared with the guidance of our clergy.</p>
+  </footer>
+</div>
+
+<script>
+/* =====================================================================
+   EDIT HERE
+   1. Change CHURCH_NAME.
+   2. The service is split into SECTIONS (Wayzema, Mahlet, ...). Each has
+      its own list of hymns, numbered from 1. Put the same number on the
+      slide, for example "Wayzema 3".
+   3. To add a hymn, copy one block inside a section's hymns list, paste
+      it at the end (comma after the previous block), and fill it in.
+      A hymn is made of parts (for example Negs, Ziq, Wereb). Each part
+      has a label, its geez, and its english. The English shows directly
+      under the Geez. Leave english as "" until it is ready and the page
+      shows "Translation coming soon." Copy a part block to add more.
+   4. Use \n inside a text to start a new line (\n\n leaves a blank line).
+   5. Set reviewed: true once a priest or deacon has approved the entry.
+   6. Optional: image: "yared-tree.jpg" on a hymn picks its picture.
+   ===================================================================== */
+
+const CHURCH_NAME = "St. Mary and St. Gabriel Ethiopian Orthodox Tewahedo Church";
+
+const SECTIONS = [
+  {
+    id: "wayzema",                      // letters only, used in the web address
+    titleGeez: "ዋዜማ",
+    titleEnglish: "Wayzema",
+    about: "The hymns of the eve of the feast.",
+    hymns: [
+          {
+                "id": 1,
+                "titleGeez": "ዋዜማ በ፩፦ ሃሌሉያ ኢኃደጋ ለምድር",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "ዋዜማ በ፩",
+                            "geez": "ሃሌሉያ ኢኃደጋ ለምድር እምቅድመ ዓለም ወእስከ ለዓለም፤ እንበለ ካህናት ወዲያቆናት፤ ዘካርያስ ካህን ነቢይ ወሰማዕት፤ ዘርእየ፤ ተቅዋመ ማኅቶት።",
+                            "english": "Hallelujah! He has not forsaken the earth from before the world and unto the world, without priests and deacons. Zechariah, priest, prophet, and martyr, who saw the lampstand."
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 2,
+                "titleGeez": "ምልጣን፦ ዘካርያስ ካህን ነቢይ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "ምልጣን (Meltan)",
+                            "geez": "ዘካርያስ ካህን ነቢይ ወሰማዕት፤ ዘርእየ ተቅዋመ ማኅቶት፤ ዘርእየ ተቅዋመ ማኅቶት።",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 3,
+                "titleGeez": "ሰላም፦ ሃሌ ሃሌ ሉያ ዘካርያስ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "ሰላም (Selam)",
+                            "geez": "ሃሌ ሃሌ ሉያ ዘካርያስ ርእየ ተቅዋመ ማኅቶት፤ ኲለንታሃ ወርቅ፤ ዓረፋቲሃ ዘዕንቊ፤ ፯ቱ መኃትዊሃ፤ ወ፯ቱ መሣውር ዘዲቤሃ፤ ዕዝራኒ ርእያ ለጽዮን ቅድስት ሰላማዊት።",
+                            "english": "Hallelujah! Zechariah saw the lampstand, whose whole body was gold, whose crowns/pedestals were of pearl, whose seven wicks (or pipes) and seven lamps (or burners) were upon it. Ezra also saw Zion, the Holy, the Peaceful one."
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          }
+    ]
+  },
+  {
+    id: "mahlet",
+    titleGeez: "ማህሌት",
+    titleEnglish: "Mahlet",
+    about: "The great Mahlet, the long series of hymns of the feast.",
+    hymns: [
+          {
+                "id": 1,
+                "titleGeez": "ነግሥ፦ ስምዓኒ እግዚኦ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "ነግሥ (የማንኛውም ወርኃዊ በዓልና ክብረ በዓል ሥርዓተ ማኅሌት መጀመሪያ)",
+                            "geez": "ስምዓኒ እግዚኦ ጸሎትየ፡ ሃሌሉያ ሃሌሉያ፡\nወይብጻሕ ቅድሜከ ገአርየ፡ ሃሌሉያ ሃሌሉያ፡\nወኢትሚጥ ገጸከ እምኔየ፡ በዕለተ ምንዳቤየ አጽምእ እዝነከ ኀቤየ፡ ሃሌሉያ ሃሌሉያ፡\nአመ ዕለተ እጼውአከ ፍጡነ ስምዓኒ፡ ሃሌሉያ ሃሌሉያ፡\nለዓለም ወለዓለመ ዓለም፡ ሃሌሉያ ዘውእቱ ብሂል፡ ንወድሶ ለዘሃሎ እግዚአብሔር ልዑል፡ ስቡሕ ወውዱስ ዘሣረረ ኲሎ ዓለመ፡ በአሐቲ ቃል።",
+                            "english": "Hear my prayer, O Lord, hallelujah, hallelujah; and let my cries reach before You, hallelujah, hallelujah; and do not turn Your face from me.\n\nOn the day of my tribulation, incline Your ear towards me, hallelujah, hallelujah; on the day I call upon You, hear me quickly (1), hallelujah, hallelujah; this age and unto the ages of ages.\n\n“Hallelujah” is the saying that means, “Let us praise the Existing One (2), God the Highest.” Glorified and praised is He who established the whole world with one word."
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": [
+                      "(1) Psalm 101(102):1-2",
+                      "(2) Exodus 3:14"
+                ]
+          },
+          {
+                "id": 2,
+                "titleGeez": "መልክአ ሥላሴ፦ ሰላም ለኲልያቲክሙ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "መልክአ ሥላሴ (Melke Selassie)",
+                            "geez": "ሰላም ለኲልያቲክሙ እለ ዕሩያን በአካል፤ ዓለመክሙ ሥላሴ አመ ሐወጸ በሣህል፤ እምኔክሙ አሐዱ እግዚአብሔር ቃል፤ ተፈጸመ ተስፋ አበው በማርያም ድንግል፤ ወበቀራንዮ ተተክለ መድኃኒት መስቀል",
+                            "english": "Peace be to Your loins, that are equal in Person,\nWhen He visited Your world, O Trinity, for compassion,\nOne out of You three, God the Word,\nThe hope of the fathers was fulfilled in the Virgin Mary,\nAnd at Calvary was planted our Salvation, the Cross."
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "ሃሌሉያ ለአብ፤ ሃሌሉያ ለወልድ፤ ሃሌሉያ ለመንፈስ ቅዱስ፤ ዕዝራኒ ርእያ ለጽዮን ቅድስት፤ እንዘ ትበኪ ከመ ብእሲት።",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "This verse is translated as Reins in the OSB because “loins” and “reins” mean 2 different things.\n\nLoins - refers literally to lower back, waist or hip. The function of it in the context of biblical writing is to denote strength, power and readiness.\n\nEx.) “Gird up your loins like a man.” (Job 38:3)\n\nReins - literally kidney. In terms of stipulation however, it stipulates inner thoughts, consciousness and emotions.\n\nEx.) “I the Lord search the heart, I try the reins..” (Jeremiah 17:10).\n\nIn revelations this language, that is present in Jeremiah and the Psalms, is used again, “I am He who searches hearts and minds“ (Rev 2:23), the original Greek though says kidneys though here, so obviously not literal kidneys but we can see the pattern of bodily organs functioning as symbols of the inner faculties of humans.",
+                "sources": []
+          },
+          {
+                "id": 3,
+                "titleGeez": "ነግሥ፦ ሰላም ለዝክረ ስምኪ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "ነግሥ (Negs)",
+                            "geez": "ሰላም ለዝክረ ስምኪ ዘመንክር ጣዕሙ፤ ለወልድኪ አምሳለ ደሙ፤ መሠረተ ህይወት ማርያም ወጥንተ መድኃኒት ዘእምቀዲሙ፤ ኪያኪ ሠናይተ ዘፈጠረ ለቤዛ ዓለሙ፤ እግዚአብሔር ይትባረክ ወይትአኮት ስሙ።",
+                            "english": "Peace be to the remembrance of your name, whose taste is wondrous,\nAnd a symbol of your Son’s blood,\nMary, you are the foundation of life and the beginning of salvation planned from old,\nHe who created you for the salvation of His world,\nBlessed be God and praised be His name."
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "ዘዘካርያስ ተቅዋም ዘወርቅ፤ ዘሕዝቅኤል ነቢይ ዕፁት ምስራቅ፤ ለመሠረትኪ የኃቱ ዕንቊ፤ ሰአሊ ለነ ማርያም፤ በአሚን ንጽድቅ።",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 4,
+                "titleGeez": "ነግሥ፦ ነቢያተ ፳ኤል",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "ነግሥ (Negs)",
+                            "geez": "ነቢያተ ፳ኤል ጸሐፉ በመጽሐፎሙ እሙነ፤ ነገረ ሰቆቃው ወላህ በዘመኖሙ ዘኮነ፤ ለባቢሎን ውስተ አፍላጋ አመ በጼዋዌ ነበርነ፤ ውስተ ኲሃቲሃ ዕንዝራቲነ ሰቀልነ፤ ሶበ ተዘከርናሃ ለጽዮን እምነ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "ወይቤላ ኢትሬእዪኑ ላሀ ዚአነ፤ እንተ ረከበተነ በእንተ ጽዮን፤ ዕዝራኒ ርእያ ወተናገራ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "ወይቤላ ኢትሬእዪኑ ላሀ ዚአነ እንተ ረከበተነ/፪/\nዕዝራኒ ርእያ ወተናገራ/፪/",
+                            "english": "He said to her, “Do you not see the sorrow that has come upon us?”\nEzra saw and spoke to her."
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 5,
+                "titleGeez": "መልክአ ማርያም፦ ሰላም ሰላም ለዝክረ ስምኪ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "መልክአ ማርያም (Melke Mariam)",
+                            "geez": "ሰላም ሰላም ለዝክረ ስምኪ ሐዋዝ፤ እምነ ከልበኔ ወቊስጥ ወእምነ ሰንበልት ምዑዝ፤ ማርያም ድንግል ለባሲተ ዓቢይት እዛዝ፤ ይስቅየኒ ለለጽባሑ ወይነፍቅርኪ አዚዝ፤ ከመ ይሰቅዮ ውኂዝ ለሠናይ አርዝ።",
+                            "english": "Exalted salutations to the commemoration of your name,\nwhich is sweeter than galbanum, costus and fragrant spikenard.\nVirgin Mary, you are the wearer of a great commandment.\nMay the wine of your strong love slake me every morning,\nas a stream waters a goodly cedar."
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "እምነ ጽዮን በሀ፤ ቅድስት ቤተ ክርስቲያን፤ ሥርጉት በስብሐት፤ ዓረፋቲሃ ዘመረግድ፤ ሥርጉት በስብሐት፤ ወማኅፈዲሃኒ ዘቢረሌ፤ ሥርጉት በስብሐት፤ እምስነ ገድሎሙ ለሰማዕት፤ ሥርጉት በስብሐት፤ ታቦተ ሕጉ ለንጉሥ ዓቢይ፤ ሥርጉት በስብሐት፤ እንተ ክርስቶስ መሠረትኪ፤ ፀሐየ ጽድቅ ያበርህ ለኪ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "እንተ ክርስቶስ መሠረትኪ ፀሐየ ጽድቅ ያበርህ ለኪ ፀሐየ ጽድቅ/፪/\nለሰማዕት \"ሥርጉት በስብሐት\"/፪//፪/",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 6,
+                "titleGeez": "መልክአ ማርያም፦ ሰላም ለአስናንኪ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "መልክአ ማርያም (Melke Mariam)",
+                            "geez": "ሰላም ለአስናንኪ ሐሊበ ዕጎልት ዘተዛወጋ፤ ወመራዕየ ቅሩጻተ እለ እም ሕፃብ ዐርጋ፤ ማርያም ድንግል ለደብተራ ስምዕ ታቦተ ሕጋ፤ አፍቅርኒ እንበለ ንትጋ ለብእሴ ደም ወሥጋ፤ ዘየዐቢ እምዝ ኢየኀሥሥ ጸጋ።",
+                            "english": "Salutation to your teeth, which resemble the milk of calves\nand shorn flocks of sheep that have come up from the washing.\nVirgin Mary, you are the Ark of the Law of the Tabernacle of witness.\nCeaselessly love me, a person of flesh and blood,\nfor I do not seek a greater grace than this."
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "ታቦተ ሕጉ ለእግዚአብሔር በካህናት ሕፅርት፤ ወበመንፈስ ቅዱስ ክልልት፤ ንጉሥኪ ጽዮን፤ ኢይትመዋዕለ ፀር ወኢየኃድጋ ለሀገር።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "ታቦተ ሕጉ ለእግዚአብሔር በካህናት ሕፅርት ወበመንፈስ ቅዱስ ክልልት/፪/\nንጉሥኪ ጽዮን ኢይትመዋዕለ ፀር ወኢየኃድጋ ለሀገር/፪/",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 7,
+                "titleGeez": "መልክአ ማርያም፦ ሰላም ለከርሥኪ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "መልክአ ማርያም (Melke Mariam)",
+                            "geez": "ሰላም ለከርሥኪ ዘአፈድፈደ ተበጽዖ፤ እምታቦተ ሙሴ ነቢይ ለጽሌት እዛዝ ዘየኀብኦ፤ ማርያም ድንግል ጊዜ ጸዋዕኩኪ በአስተብቊዖ፤ ለፀርየ ብእሴ ዐመፃ ሃይለ ዚአኪ ይጽብኦ፤ እስከነ ያስቆቁ ጥቀ ድኅሪ ተገቢኦ።",
+                            "english": "Salutation to your abdomen, the blessedness of which surpasses\nthe Ark of the Prophet Moses that contained the testimony.\nO Virgin Mary, when I call on you in supplication,\nmay your power strive with my enemy, the man of lawlessness,\nuntil, turning back, he wails exceedingly."
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "ሃሌ ሃሌ ሉያ፤ በጾም ወበጸሎት ተመጠወ ሙሴ ኦሪተ፤ ጽላተ አሥሮነ ቃላተ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "ሃሌ ሃሌ ሉያ በጾም ወበጸሎት/፪/\nተመጠወ ሙሴ ኦሪተ ጽላተ አሥሮነ ቃላተ/፪/",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 8,
+                "titleGeez": "መልክአ ማርያም፦ ሰላም ለመከየድኪ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "መልክአ ማርያም (Melke Mariam)",
+                            "geez": "ሰላም ለመከየድኪ እለ ረከቦን መከራ፤ እምፍርሃተ ቀተልት ሐራ እንበለ አሣእን አመ ሖራ፤ ማርያም ጽዮን ታቦተ ቃለ ጽድቅ መንፈቀ ዕሥራ፤ ዕጎላት እምጎሊሆን ከመ ኪያኪ አፍቀራ፤ አፍቀርኩኪ አፍቅርኒ እምይእዜ ለግሙራ።",
+                            "english": "Salutation to your soles, which out of fear for the troops of murderers, were afflicted when they went without shoes.\nO Mary, you are Zion, the Ark of the words of truth, the numeration of which is half of twenty.\nLove me now and always, for I have loved you, as heifers have loved you more than their own young."
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "ማርያም ጽዮን ታቦተ ታቦተ ፍሲለደስ ወኢያሱ ታቦተ ቃለ ጽድቅ/፪/\nዕጎላት እምጎሊሆን ከመ ኪያኪ አፍቀራ አፍቀራ እምጎሊሆን/፪/",
+                            "english": ""
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "ሃሌሉያ፤ ወሪድየ ብሔረ ሮሜ፤ ለቤተ ክርስቲያን ርኢክዋ፤ አእመርክዋ አፍቀርክዋ፤ ከመ እኅትየ ኀለይኩ፤ እምድኅረ ጒንዱይ መዋዕል፤ ወእምዝ እምድኅረ ኅዳጥ ዓመታት፤ ካዕበ ርኢክዋ፤ ወትትሐፀብ በፈለገ ጢሮስ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "ሃሌሉያ ሃሌሉያ ወሪድየ ብሔረ ሮሜ/፪/\nለቤተ ክርስቲያን ርኢክዋ አእመርክዋ አፍቀርክዋ ለቤተ ክርስቲያን/፪/",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 9,
+                "titleGeez": "መልክአ ማርያም፦ በዝንቱ ቃለ ማኅሌት",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "መልክአ ማርያም (Melke Mariam)",
+                            "geez": "በዝንቱ ቃለ ማኅሌት ወበዝንቱ ይባቤ፤ ለዘይስእለኪ ብእሲ ጊዜ ረከቦ ምንዳቤ፤ ብጽሒ ፍጡነ ትሠጠዊዮ ዘይቤ፤ ማርያም ዕንቊየ ክርስቲሎቤ ወምዕዝተ ምግባር እምከርቤ፤ ዘጸገየ ማኅፀንኪ አፈወ ነባቤ።",
+                            "english": "Come quickly to the person who supplicates you with the words of this hymn and this jubilation to accept what they say when they are afflicted.\nO Mary, you are my chrysolite jewel and the one whose deeds are more fragrant than myrrh; the One Whom your womb brought forth, is an articulate fragrance."
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "አብርሒ አብርሒ ጽዮን፤ ዕንቊ ዘጳዝዮን፤ ዘኃረየኪ ሰሎሞን።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "አብርሒ አብርሒ ጽዮን አብርሒ/፪/\nዕንቊ ዘጳዝዮን ዘኃረየኪ ሰሎሞን/፪/",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 10,
+                "titleGeez": "ማኅሌተ ጽጌ፦ ዘካርያስ ርእየ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "ማኅሌተ ጽጌ (Mahlete Tsige)",
+                            "geez": "ዘካርያስ ርእየ ለወርኃ ሳባጥ በሠርቁ፤ ተአምርኪ ለዘይትማዕከለ ፪ኤ አዕፁቁ፤ ማርያም ጽዮን ለብርሃን ተቅዋመ ወርቁ፤ ዕዝራኒ በገዳም አመ ወዓለ ውዱቁ፤ ለኅብረ ገጽኪ ጽጌ አተወ መብረቁ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ዚቅ (Ziq)",
+                            "geez": "ለቅድስት ቤተ ክርስቲያን፤ ፯ቱ መኃትዊሃ ወ፯ቱ መሣውር ዘዲቤሃ፤ ዘካርያስ ርእየ ተቅዋመ ማኅቶት ዘኲለንታሃ ወርቅ ወያከንት፤ ዕዝራኒ ርእያ በርዕየተ ብእሲት፤ ወሶበ ርእያ ኢኮነት ብእሲተ አላ ሀገር ቅድስት።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ወረብ (Wereb)",
+                            "geez": "ለቅድስት \"ቤተ ክርስቲያን\"/፪/ መኃትዊሃ ፯ቱ መኃትዊሃ/፪/\nዕዝራኒ ርእያ በርዕየት ብእሲት/፪/",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 11,
+                "titleGeez": "አንገርጋሪ፦ ዓይ ይእቲ ዛቲ",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "አንገርጋሪ (Angergari)",
+                            "geez": "ዓይ ይእቲ ዛቲ እንተ ታስተርኢ እምርኁቅ፤ ከመ ማኅቶት ብርህት ከመ ፀሐይ፤ ሙሴኒ ርእያ፤ ሀገር ቅድስት፤ ዕዝራኒ ተናገራ ዳዊት ዘመራ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "ምልጣን (Meltan)",
+                            "geez": "ሙሴኒ ርእያ፤ ሀገር ቅድስት፤\nዕዝራኒ ተናገራ ዳዊት ዘመራ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "አመላለስ (Amelales)",
+                            "geez": "ዕዝራኒ ተናገራ/፪/\nተናገራ ዳዊት ዘመራ/፬/",
+                            "english": ""
+                      },
+                      {
+                            "label": "አንገርጋሪ ወረብ (Angergari Wereb)",
+                            "geez": "\"ሙሴኒ ርእያ\"/፪/ ሀገር ቅድስት/፪/\nዕዝራኒ ተናገራ ተናገራ ዘመራ ዳዊት/፪/",
+                            "english": "Moses saw the holy country,\nEzra spoke to her, and David sang to her."
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          },
+          {
+                "id": 12,
+                "titleGeez": "እስመ ለዓለም፦ ዘካርያስ ርእየ ተቅዋመ ማኅቶት",
+                "titleEnglish": "",
+                "reviewed": false,
+                "parts": [
+                      {
+                            "label": "እስመ ለዓለም (Esme Le’alem)",
+                            "geez": "ዘካርያስ ርእየ ተቅዋመ ማኅቶት ዘኲለንታሃ ወርቅ፤ በየማና ወበጸጋማ አዕፁቀ ዘይት፤ ደብተራ ፍጽምት ሀገር ቅድስት፤ ነቢያት ይትፌሥሑ በውስቴታ፤ ሐዋርያት ይትኃሠዩ በውስቴታ፤ ወዳዊት ይዜምር በውስተ ማኅፈዲሃ፤ ዘበሰማይኒ ወዘበምድርኒ በቃለ ዳዊት ይሴብሑ፤ ወይብሉ ኲሎሙ ሃሌሉያ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "አመላለስ (Amelales)",
+                            "geez": "ዘበሰማይኒ ወዘበምድርኒ በቃለ ዳዊት ይሴብሑ፤ ወይብሉ ኲሎሙ ሃሌሉያ።",
+                            "english": ""
+                      },
+                      {
+                            "label": "እስመ ለዓለም ወረብ (Esme Le’alem Wereb)",
+                            "geez": "ዘካርያስ ርእየ ተቅዋመ ማኅቶት ዘኲለንታሃ ወርቅ፤ በየማና ወበጸጋማ አዕፁቀ ዘይት(፪)\nነቢያት ይትፌሥሑ፤ ሐዋርያት ይትኃሠዩ በውስቴታ፤ ወዳዊት ይዜምር በውስተ ማኅፈዲሃ(፪)",
+                            "english": ""
+                      }
+                ],
+                "transliteration": "",
+                "meaning": "",
+                "sources": []
+          }
+    ]
+  }
+];
+
+/* Pictures used as banners. pos is how the picture is cropped. */
+const PICTURES = [
+  { src: "yared-tree.jpg",       pos: "50% 6%",  alt: "Icon of Saint Yared beside an open book, with doves in a tree." },
+  { src: "yared-doves.jpg",      pos: "50% 10%", alt: "Painting of Saint Yared carrying his staff, with doves above him." },
+  { src: "yared-manuscript.jpg", pos: "50% 8%",  alt: "Manuscript-style drawing of Saint Yared with three doves." }
+];
+
+/* ===================== Page code (no need to edit) ===================== */
+
+const $ = (id) => document.getElementById(id);
+
+$("church-name").textContent = CHURCH_NAME;
+
+/* Text size, remembered on this phone when possible */
+let size = 1.2;
+try {
+  const saved = parseFloat(localStorage.getItem("mahletSize"));
+  if (saved >= 1 && saved <= 2.1) size = saved;
+} catch (e) {}
+function applySize() {
+  document.documentElement.style.setProperty("--size", size + "rem");
+  try { localStorage.setItem("mahletSize", String(size)); } catch (e) {}
+}
+applySize();
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+function geezSpan(cls, text) {
+  const g = el("span", cls, text);
+  g.setAttribute("lang", "gez");
+  return g;
+}
+const hymnTitle = (h) => h.titleEnglish || ("Hymn " + h.id);
+const link = (sec, h) => "#" + sec.id + "-" + h.id;
+
+/* ---------- Home ---------- */
+function renderHome() {
+  const ul = $("sections");
+  ul.textContent = "";
+  SECTIONS.forEach((sec) => {
+    const li = el("li");
+    const ready = sec.hymns.length > 0;
+    const card = ready ? el("a") : el("div", "soon");
+    if (ready) card.href = "#" + sec.id;
+    card.append(geezSpan("sec-geez", sec.titleGeez), el("span", "sec-en", sec.titleEnglish));
+    if (sec.about) card.append(el("span", "sec-about", sec.about));
+    card.append(el("span", "sec-count", ready
+      ? sec.hymns.length + (sec.hymns.length === 1 ? " hymn" : " hymns")
+      : "Coming soon"));
+    li.append(card);
+    ul.append(li);
+  });
+}
+
+/* ---------- One section ---------- */
+let currentSection = null;
+
+function renderList(filter) {
+  const sec = currentSection;
+  const q = (filter || "").trim().toLowerCase();
+  const list = $("index");
+  list.textContent = "";
+  let shown = 0;
+  sec.hymns.forEach((h) => {
+    const hay = (h.id + " " + h.titleGeez + " " + h.titleEnglish).toLowerCase();
+    if (q && !hay.includes(q)) return;
+    shown++;
+    const li = el("li");
+    const a = el("a");
+    a.href = link(sec, h);
+    const wrap = el("span");
+    wrap.append(el("span", "t-en", hymnTitle(h)));
+    if (h.titleGeez) wrap.append(geezSpan("t-geez", h.titleGeez));
+    a.append(el("span", "halo", h.id), wrap);
+    li.append(a);
+    list.append(li);
+  });
+  $("empty").hidden = shown !== 0;
+}
+$("search").addEventListener("input", (ev) => renderList(ev.target.value));
+
+function renderSection(sec) {
+  currentSection = sec;
+  const idx = SECTIONS.indexOf(sec);
+  const pic = PICTURES[idx % PICTURES.length];
+  const b = $("sec-banner");
+  b.src = pic.src; b.alt = pic.alt; b.style.objectPosition = pic.pos;
+  $("sec-geez").textContent = sec.titleGeez;
+  $("sec-en").textContent = sec.titleEnglish;
+  $("sec-about").textContent = sec.about || "";
+  $("sec-about").hidden = !sec.about;
+
+  const box = $("jump");
+  box.textContent = "";
+  sec.hymns.forEach((h) => {
+    const a = el("a");
+    a.href = link(sec, h);
+    a.setAttribute("aria-label", "Hymn " + h.id + ": " + hymnTitle(h));
+    a.append(el("span", "halo", h.id));
+    box.append(a);
+  });
+  $("search").value = "";
+  renderList("");
+}
+
+/* ---------- One hymn ---------- */
+function fold(title, child) {
+  const det = el("details");
+  det.append(el("summary", "", title));
+  const body = el("div", "details-body");
+  body.append(child);
+  det.append(body);
+  return det;
+}
+function minor(title, text, cls, lang) {
+  const d = el("div", "minor");
+  d.append(el("h3", "", title));
+  const p = el("div", cls, text);
+  if (lang) p.setAttribute("lang", lang);
+  d.append(p);
+  return d;
+}
+
+function renderHymn(sec, h) {
+  const i = sec.hymns.indexOf(h);
+
+  const listed = h.image && PICTURES.find((p) => p.src === h.image);
+  const pic = listed || (h.image ? { src: h.image, pos: "50% 10%", alt: "Saint Yared" } : PICTURES[(SECTIONS.indexOf(sec) + i) % PICTURES.length]);
+  const banner = $("banner");
+  banner.src = pic.src;
+  banner.alt = pic.alt;
+  banner.style.objectPosition = pic.pos;
+
+  const v = $("hymn-content");
+  v.textContent = "";
+
+  /* Toolbar */
+  const bar = el("div", "toolbar");
+  const back = el("a", "back", "\u2039 " + sec.titleEnglish);
+  back.href = "#" + sec.id;
+  const sizer = el("div", "sizer");
+  const minus = el("button", "", "A\u2212");
+  minus.type = "button";
+  minus.setAttribute("aria-label", "Smaller text");
+  minus.onclick = () => { size = Math.max(1, +(size - 0.15).toFixed(2)); applySize(); };
+  const plus = el("button", "", "A+");
+  plus.type = "button";
+  plus.setAttribute("aria-label", "Larger text");
+  plus.onclick = () => { size = Math.min(2.1, +(size + 0.15).toFixed(2)); applySize(); };
+  sizer.append(minus, plus);
+  bar.append(back, sizer);
+  v.append(bar);
+
+  /* Heading */
+  const head = el("div", "hymn-head");
+  const t = el("div");
+  t.append(el("h2", "", hymnTitle(h)));
+  if (h.titleGeez) t.append(geezSpan("sub", h.titleGeez));
+  head.append(el("span", "halo", h.id), t);
+  v.append(head);
+
+  /* A hymn is made of parts (for example Negs, Ziq, Wereb).
+     Each part shows its Geez, with the English directly under it. */
+  const parts = (h.parts && h.parts.length)
+    ? h.parts
+    : [{ label: "", geez: h.geez || "", english: h.english || "" }];
+  const anyEnglish = parts.some((p) => p.english && p.english.trim());
+
+  if (anyEnglish && !h.reviewed) {
+    v.append(el("div", "draft", "Draft: this translation has not yet been reviewed by our clergy."));
+  }
+
+  parts.forEach((p) => {
+    const card = el("div", "part");
+    if (p.label) card.append(el("h3", "part-label", p.label));
+    if (p.geez && p.geez.trim()) {
+      const g = el("div", "geez", p.geez);
+      g.setAttribute("lang", "gez");
+      card.append(g);
+    }
+    const has = !!(p.english && p.english.trim());
+    card.append(el("div", has ? "english under" : "soon-text under", has ? p.english : "Translation coming soon."));
+    v.append(card);
+  });
+
+  if (h.transliteration && h.transliteration.trim()) v.append(minor("How it sounds", h.transliteration, "translit"));
+
+  if (h.meaning && h.meaning.trim()) v.append(fold("What this means", el("div", "", h.meaning)));
+  if (h.sources && h.sources.length) {
+    const ul = el("ul", "sources");
+    h.sources.forEach((s) => ul.append(el("li", "", s)));
+    v.append(fold("Where it comes from", ul));
+  }
+
+  /* Previous / next within this section */
+  const prev = sec.hymns[i - 1], next = sec.hymns[i + 1];
+  const pager = el("div", "pager");
+  const pa = el("a", "", "\u2039 Hymn " + (prev ? prev.id : ""));
+  if (prev) pa.href = link(sec, prev); else pa.className = "off";
+  const na = el("a", "", "Hymn " + (next ? next.id : "") + " \u203A");
+  if (next) na.href = link(sec, next); else na.className = "off";
+  pager.append(pa, na);
+  v.append(pager);
+}
+
+/* ---------- Routing ----------
+   #wayzema      -> Wayzema page
+   #wayzema-3    -> Wayzema, hymn 3
+   (nothing)     -> home                                                 */
+function route(hash) {
+  const m = (typeof hash === "string" ? hash : location.hash).match(/^#([a-z]+)(?:-(\d+))?$/);
+  const sec = m ? SECTIONS.find((s) => s.id === m[1] && s.hymns.length) : null;
+  const h = sec && m[2] ? sec.hymns.find((x) => x.id === parseInt(m[2], 10)) : null;
+
+  $("view-home").hidden = !!sec;
+  $("view-section").hidden = !(sec && !h);
+  $("view-hymn").hidden = !h;
+
+  if (h) {
+    renderHymn(sec, h);
+    document.title = sec.titleEnglish + " " + h.id + " \u2013 Hidar Tsion";
+  } else if (sec) {
+    renderSection(sec);
+    document.title = sec.titleEnglish + " \u2013 Hidar Tsion";
+  } else {
+    document.title = "Hidar Tsion: Follow Along";
+  }
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", () => route());
+/* Links work even where the address bar cannot change (for example in previews) */
+document.addEventListener("click", (ev) => {
+  const a = ev.target.closest && ev.target.closest('a[href^="#"]');
+  if (!a) return;
+  ev.preventDefault();
+  const target = a.getAttribute("href");
+  try { if (location.hash !== target) location.hash = target === "#" ? "" : target; } catch (e) {}
+  route(target);
+});
+renderHome();
+route();
+</script>
+</body>
+</html>
